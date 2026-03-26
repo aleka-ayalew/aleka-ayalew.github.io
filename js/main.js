@@ -235,6 +235,16 @@ if (yearEl) {
   yearEl.textContent = new Date().getFullYear();
 }
 
+// ---------- Nav brand: scroll to top, no hash in URL ----------
+var navBrand = document.querySelector('.nav-brand');
+if (navBrand) {
+  navBrand.addEventListener('click', function (e) {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    history.replaceState(null, '', '/');
+  });
+}
+
 // Run once at init
 handleNavbarScroll();
 updateActiveNavLink();
