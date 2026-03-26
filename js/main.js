@@ -3,6 +3,47 @@
    Arctic Aurora Academic Portfolio
    ===================================================== */
 
+// ---------- Live Citation Count (Semantic Scholar API) ----------
+// Google Scholar has no public API; Semantic Scholar provides a free,
+// CORS-enabled alternative. The fetched count updates data-count before
+// the IntersectionObserver fires the counter animation.
+(function fetchLiveCitations() {
+  var url = 'https://api.semanticscholar.org/graph/v1/author/search' +
+    '?query=Aleka+Melese+Ayalew&fields=name,citationCount,paperCount,hIndex&limit=5';
+
+  fetch(url)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data.data || !data.data.length) return;
+
+      // Pick the result that mentions "Aleka" and has the highest citation count
+      var best = null;
+      data.data.forEach(function (author) {
+        var name = (author.name || '').toLowerCase();
+        if (name.indexOf('aleka') === -1) return;
+        if (!best || (author.citationCount || 0) > (best.citationCount || 0)) {
+          best = author;
+        }
+      });
+      if (!best || !best.citationCount) return;
+
+      // Update the citations counter element
+      var citEl = document.querySelector('.metric-number[data-count]');
+      if (citEl) {
+        citEl.setAttribute('data-count', best.citationCount);
+        // Also update the section-subtitle text if already rendered
+        var subtitleEl = document.querySelector('#publications .section-subtitle');
+        if (subtitleEl) {
+          subtitleEl.innerHTML = subtitleEl.innerHTML.replace(
+            /\d+\+?\s*citations/i,
+            best.citationCount + '+ citations'
+          );
+        }
+      }
+    })
+    .catch(function () { /* keep static fallback */ });
+})();
+
 // ---------- Theme Toggle ----------
 (function initTheme() {
   var saved = localStorage.getItem('theme') || 'dark';
