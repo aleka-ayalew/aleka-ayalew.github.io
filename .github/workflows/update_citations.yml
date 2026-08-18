@@ -1,11 +1,11 @@
 name: Update Google Scholar citations
 on:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: '0 6 * * *'   # daily at 06:00 UTC
   workflow_dispatch:
 
 permissions:
-  contents: write   # needed so the commit step can push
+  contents: write
 
 jobs:
   update:
@@ -37,13 +37,12 @@ jobs:
       - name: Show python version and list repo files (debug)
         run: |
           python --version
+          echo "Listing repo root:"
           ls -la
-          ls -la scripts || true
 
       - name: Fetch citations
         env:
           SCHOLAR_URL: ${{ secrets.SCHOLAR_URL }}
-          GITHUB_ACTIONS: true
         run: python scripts/get_citation_count.py
 
       - name: Commit updated data
