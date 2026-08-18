@@ -21,6 +21,10 @@
       if (j) {
         if (typeof j.citations === 'number') {
           setText('citation-count', j.citations);
+          const citationEl = document.getElementById('citation-count');
+          if (citationEl) {
+            citationEl.setAttribute('data-count', String(j.citations));
+          }
         }
         if (typeof j.publications === 'number') {
           const pubs = j.publications;
@@ -43,6 +47,11 @@
             });
           } catch (e) {
             // ignore
+          }
+
+          const publicationEl = document.getElementById('publication-count');
+          if (publicationEl) {
+            publicationEl.setAttribute('data-count', String(pubs));
           }
         }
       }

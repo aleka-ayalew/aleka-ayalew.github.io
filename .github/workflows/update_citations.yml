@@ -12,24 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: true
 
-      - name: "Sanity: confirm SCHOLAR_URL secret is available"
-        env:
-          SCHOLAR_URL: ${{ secrets.SCHOLAR_URL }}
-        run: |
-          if [ -z "${SCHOLAR_URL}" ]; then
-            echo "ERROR: SCHOLAR_URL secret is missing or empty. Please add repository secret named SCHOLAR_URL."
-            exit 1
-          fi
-          echo "SCHOLAR_URL appears to be set (masked)."
-
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.12'
 
       - name: Install deps
         run: pip install requests beautifulsoup4
@@ -42,7 +32,7 @@ jobs:
 
       - name: Fetch citations
         env:
-          SCHOLAR_URL: ${{ secrets.SCHOLAR_URL }}
+          SCHOLAR_URL: ${{ secrets.SCHOLAR_URL || 'https://scholar.google.com/citations?hl=en&user=Yda5OkEAAAAJ' }}
         run: python scripts/get_citation_count.py
 
       - name: Commit updated data

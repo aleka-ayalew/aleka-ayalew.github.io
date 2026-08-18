@@ -12,30 +12,64 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
-url = os.environ.get("SCHOLAR_URL") or (sys.argv[1] if len(sys.argv) > 1 else None)
+default_url = "https://scholar.google.com/citations?hl=en&user=Yda5OkEAAAAJ"
+url = os.environ.get("SCHOLAR_URL") or (sys.argv[1] if len(sys.argv) > 1 else default_url)
 if not url:
     raise SystemExit("Set SCHOLAR_URL env or pass profile URL as first arg")
 
 headers = {"User-Agent": "Mozilla/5.0 (compatible; CitationBot/1.0)"}
+headers["Accept-Language"] = "en-US,en;q=0.9"
+
+out_path = os.path.join("data", "citations.json")
+existing_payload = None
+if os.path.exists(out_path):
+    try:
+        with open(out_path, "r", encoding="utf-8") as f:
+            existing_payload = json.load(f)
+    except Exception:
+        existing_payload = None
 
 # Fetch the profile page for metrics (citations table)
-resp = requests.get(url, headers=headers, timeout=15)
-resp.raise_for_status()
+resp = None
+last_error = None
+for _ in range(3):
+    try:
+        resp = requests.get(url, headers=headers, timeout=20)
+        resp.raise_for_status()
+        break
+    except requests.RequestException as e:
+        last_error = e
+
+if resp is None:
+    if existing_payload and isinstance(existing_payload.get("citations"), int):
+        print(f"Warning: could not fetch Google Scholar ({last_error}); keeping existing data in {out_path}")
+        sys.exit(0)
+    raise SystemExit(f"Could not fetch Google Scholar data and no existing citation cache is available: {last_error}")
+
 soup = BeautifulSoup(resp.text, "html.parser")
 
 # Parse citations from the summary table
 table = soup.find("table", class_="gsc_rsb_st")
 if not table:
+    if existing_payload and isinstance(existing_payload.get("citations"), int):
+        print(f"Warning: couldn't parse citations table from Google Scholar page; keeping existing data in {out_path}")
+        sys.exit(0)
     raise SystemExit("Couldn't find citations table on the page. Is the profile public?")
 
 rows = table.find_all("tr")
 if not rows or len(rows) < 1:
+    if existing_payload and isinstance(existing_payload.get("citations"), int):
+        print(f"Warning: unexpected page format while reading citations; keeping existing data in {out_path}")
+        sys.exit(0)
     raise SystemExit("Unexpected page format: no citation rows found")
 
 try:
     citations_text = rows[0].find_all("td")[1].get_text(strip=True)
     citations = int(citations_text.replace(",", ""))
 except Exception as e:
+    if existing_payload and isinstance(existing_payload.get("citations"), int):
+        print(f"Warning: couldn't parse citation count ({e}); keeping existing data in {out_path}")
+        sys.exit(0)
     raise SystemExit(f"Couldn't parse citation count: {e}")
 
 # Attempt to fetch publications list with a large pagesize to count all publications
@@ -80,7 +114,6 @@ payload = {
 }
 
 os.makedirs("data", exist_ok=True)
-out_path = os.path.join("data", "citations.json")
 with open(out_path, "w", encoding="utf-8") as f:
     json.dump(payload, f, indent=2)
 print("Wrote", out_path, payload)
