@@ -16,7 +16,7 @@ jobs:
         with:
           persist-credentials: true
 
-      - name: Sanity: confirm SCHOLAR_URL secret is available
+      - name: "Sanity: confirm SCHOLAR_URL secret is available"
         env:
           SCHOLAR_URL: ${{ secrets.SCHOLAR_URL }}
         run: |
