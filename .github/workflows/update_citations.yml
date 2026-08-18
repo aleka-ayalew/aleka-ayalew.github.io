@@ -1,0 +1,54 @@
+name: Update Google Scholar citations
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily at 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Sanity: confirm SCHOLAR_URL secret is available
+        env:
+          SCHOLAR_URL: ${{ secrets.SCHOLAR_URL }}
+        run: |
+          if [ -z "${SCHOLAR_URL}" ]; then
+            echo "ERROR: SCHOLAR_URL secret is missing or empty. Please add repository secret named SCHOLAR_URL."
+            exit 1
+          fi
+          echo "SCHOLAR_URL appears to be set (masked)."
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install deps
+        run: pip install requests beautifulsoup4
+
+      - name: Show python version and list repo files (debug)
+        run: |
+          python --version
+          echo "Listing repo root:"
+          ls -la
+
+      - name: Fetch citations
+        env:
+          SCHOLAR_URL: ${{ secrets.SCHOLAR_URL }}
+        run: python scripts/get_citation_count.py
+
+      - name: Commit updated data
+        uses: EndBug/add-and-commit@v9
+        with:
+          author_name: github-actions[bot]
+          author_email: github-actions[bot]@users.noreply.github.com
+          message: "chore: update Google Scholar citation count"
+          add: "data/citations.json"
