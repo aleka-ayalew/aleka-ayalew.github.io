@@ -12,7 +12,8 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
-url = os.environ.get("SCHOLAR_URL") or (sys.argv[1] if len(sys.argv) > 1 else None)
+default_url = "https://scholar.google.com/citations?hl=en&user=Yda5OkEAAAAJ"
+url = os.environ.get("SCHOLAR_URL") or (sys.argv[1] if len(sys.argv) > 1 else default_url)
 if not url:
     raise SystemExit("Set SCHOLAR_URL env or pass profile URL as first arg")
 

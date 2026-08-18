@@ -16,16 +16,6 @@ jobs:
         with:
           persist-credentials: true
 
-      - name: "Sanity: confirm SCHOLAR_URL secret is available"
-        env:
-          SCHOLAR_URL: ${{ secrets.SCHOLAR_URL }}
-        run: |
-          if [ -z "${SCHOLAR_URL}" ]; then
-            echo "ERROR: SCHOLAR_URL secret is missing or empty. Please add repository secret named SCHOLAR_URL."
-            exit 1
-          fi
-          echo "SCHOLAR_URL appears to be set (masked)."
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -42,7 +32,7 @@ jobs:
 
       - name: Fetch citations
         env:
-          SCHOLAR_URL: ${{ secrets.SCHOLAR_URL }}
+          SCHOLAR_URL: ${{ secrets.SCHOLAR_URL || 'https://scholar.google.com/citations?hl=en&user=Yda5OkEAAAAJ' }}
         run: python scripts/get_citation_count.py
 
       - name: Commit updated data
